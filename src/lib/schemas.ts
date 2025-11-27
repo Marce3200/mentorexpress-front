@@ -7,6 +7,22 @@ export const careerEnum = z.enum([
   "ELECTRICAL_ENGINEERING",
   "INDUSTRIAL_ENGINEERING",
 ]);
+export const subjectEnum = z.enum([
+  "CALCULUS_I",
+  "LINEAR_ALGEBRA",
+  "PHYSICS",
+  "PROGRAMMING",
+  "ELECTRONICS",
+]);
+export const languageEnum = z.enum([
+  "SPANISH",
+  "ENGLISH",
+  "SPANISH_ENGLISH",
+]);
+export const modalityEnum = z.enum([
+  "IN_PERSON",
+  "ONLINE",
+]);
 
 export const studentSchema = z.object({
   fullName: z.string().min(2, { message: "El nombre debe tener al menos 2 caracteres" }),
@@ -18,6 +34,20 @@ export const studentSchema = z.object({
 });
 
 export type StudentFormValues = z.infer<typeof studentSchema>;
+
+export const mentorSchema = z.object({
+  fullName: z.string().min(2, { message: "El nombre debe tener al menos 2 caracteres" }),
+  email: z.string().email({ message: "Por favor ingresa un correo válido" }),
+  campus: campusEnum,
+  career: careerEnum,
+  specialtySubject: subjectEnum,
+  language: languageEnum,
+  modality: modalityEnum,
+  bio: z.string().min(20, { message: "La biografía debe tener al menos 20 caracteres" }),
+  availability: z.string().min(10, { message: "Por favor describe tu disponibilidad horaria" }),
+});
+
+export type MentorFormValues = z.infer<typeof mentorSchema>;
 
 export const matchingParamsSchema = z.object({
   campus: campusEnum.optional(),

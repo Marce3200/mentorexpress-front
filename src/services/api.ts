@@ -1,4 +1,4 @@
-import { StudentFormValues } from "@/lib/schemas";
+import { StudentFormValues, MentorFormValues } from "@/lib/schemas";
 import { Mentor } from "@/types";
 
 // Re-export for backward compatibility
@@ -46,6 +46,17 @@ export async function registerStudent(data: StudentFormValues) {
     });
     
     if (!res.ok) throw new Error("Failed to register student");
+    return res.json();
+}
+
+export async function registerMentor(data: MentorFormValues) {
+    const res = await fetch("/api/mentors", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+    });
+    
+    if (!res.ok) throw new Error("Failed to register mentor");
     return res.json();
 }
 

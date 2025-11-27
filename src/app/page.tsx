@@ -66,7 +66,7 @@ export default function LandingPage() {
                 variant="outline" 
                 className="font-semibold"
             >
-                <Link href="#">Soy Mentor</Link>
+                <Link href="/onboarding/mentor">Soy Mentor</Link>
             </Button>
           </motion.div>
         </div>
