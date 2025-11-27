@@ -1,0 +1,24 @@
+version: '3.8'
+
+services:
+  nextjs:
+    build: .
+    ports:
+      - "${PORT:-3007}:${PORT:-3007}"
+    environment:
+      - NODE_ENV=production
+      - PORT=${PORT:-3007}
+    networks:
+      - app-network
+
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    command: tunnel --url http://nextjs:${PORT:-3007} --protocol http2
+    depends_on:
+      - nextjs
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge

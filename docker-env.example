@@ -1,0 +1,5 @@
+# Configuración de variables de entorno para Docker
+# Copia este archivo a .env y modifica los valores según necesites
+
+# Puerto en el que correrá la aplicación Next.js (por defecto: 3007)
+PORT=3007
