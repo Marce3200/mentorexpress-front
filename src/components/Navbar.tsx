@@ -2,7 +2,6 @@
 
 import { Bot } from "lucide-react";
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
 import { ModeToggle } from "@/components/mode-toggle";
 
 export function Navbar() {
@@ -18,19 +17,7 @@ export function Navbar() {
           </Link>
           <nav className="flex items-center space-x-6 text-sm font-medium">
             <Link
-              href="#"
-              className="transition-colors hover:text-foreground/80 text-foreground/60"
-            >
-              Características
-            </Link>
-            <Link
-              href="/matching"
-              className="transition-colors hover:text-foreground/80 text-foreground/60"
-            >
-              Emparejamiento
-            </Link>
-            <Link
-              href="#"
+              href="#acerca-de"
               className="transition-colors hover:text-foreground/80 text-foreground/60"
             >
               Acerca de
@@ -41,9 +28,6 @@ export function Navbar() {
           <div className="w-full flex-1 md:w-auto md:flex-none">
           </div>
           <ModeToggle />
-          <Button variant="ghost" asChild>
-            <Link href="#">Iniciar Sesión</Link>
-          </Button>
         </div>
       </div>
     </nav>

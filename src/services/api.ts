@@ -1,8 +1,8 @@
 import { StudentFormValues, MentorFormValues } from "@/lib/schemas";
-import { Mentor } from "@/types";
+import { Mentor, HelpRequestResult, SelectMentorResult } from "@/types";
 
 // Re-export for backward compatibility
-export type { Mentor };
+export type { Mentor, HelpRequestResult, SelectMentorResult };
 
 // MOCK DATA
 const MOCK_MENTORS: Mentor[] = [
@@ -57,6 +57,34 @@ export async function registerMentor(data: MentorFormValues) {
     });
     
     if (!res.ok) throw new Error("Failed to register mentor");
+    return res.json();
+}
+
+/**
+ * Request help with automatic triage and matching
+ * This replaces the old registerStudent for the student onboarding flow
+ */
+export async function requestHelp(data: StudentFormValues): Promise<HelpRequestResult> {
+    const res = await fetch("/api/students/request-help", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+    });
+    
+    if (!res.ok) throw new Error("Failed to request help");
+    return res.json();
+}
+
+/**
+ * Select a mentor from the list of candidates
+ */
+export async function selectMentor(studentId: number, mentorId: number): Promise<SelectMentorResult> {
+    const res = await fetch(`/api/students/${studentId}/select-mentor/${mentorId}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+    });
+    
+    if (!res.ok) throw new Error("Failed to select mentor");
     return res.json();
 }
 

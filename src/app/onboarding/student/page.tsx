@@ -3,7 +3,7 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { studentSchema, StudentFormValues } from "@/lib/schemas";
-import { registerStudent } from "@/services/api";
+import { requestHelp } from "@/services/api";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
@@ -42,17 +42,23 @@ export default function OnboardingPage() {
   async function onSubmit(data: StudentFormValues) {
     setIsLoading(true);
     try {
-        // 1. Register Student
-        await registerStudent(data);
-        // 2. Store basic profile in local storage for the matching demo
-        localStorage.setItem("studentProfile", JSON.stringify(data));
-        // 3. Redirect
-        router.push("/matching");
+        // 1. Request help with triage
+        const result = await requestHelp(data);
+        
+        // 2. Store result in session storage
+        sessionStorage.setItem("helpRequestResult", JSON.stringify(result));
+        
+        // 3. Route based on triage result
+        if (result.resultado.tipo === "emocional") {
+            // Emotional support needed - redirect to welfare page
+            router.push("/resultado/emocional");
+        } else {
+            // Academic help - redirect to mentor selection
+            router.push("/matching");
+        }
     } catch (error) {
-        console.error(error);
-        // Even if it fails (backend down), proceed to matching for the demo
-        localStorage.setItem("studentProfile", JSON.stringify(data));
-        router.push("/matching");
+        console.error("Error requesting help:", error);
+        alert("Hubo un error al procesar tu solicitud. Por favor intenta de nuevo.");
     } finally {
         setIsLoading(false);
     }
