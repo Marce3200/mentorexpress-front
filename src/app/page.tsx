@@ -42,9 +42,9 @@ export default function LandingPage() {
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.5 }}
-            className="w-full max-w-sm -my-4"
+            className="flex justify-center mt-10"
           >
-            <Logo width={400} height={200} className="mx-auto w-full h-auto" />
+            <Logo width={490} height={240} gradient cropScale={1.4} />
           </motion.div>
 
           <motion.p 
