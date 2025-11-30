@@ -4,11 +4,31 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { studentSchema, StudentFormValues } from "@/lib/schemas";
 import { requestHelp } from "@/services/api";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
-import { XCircle, Brain, CheckCircle2, GraduationCap, MapPin, Briefcase, Award, ArrowLeft } from "lucide-react";
+import { XCircle, Brain, CheckCircle2, GraduationCap, MapPin, Briefcase, Award, ArrowLeft, Calendar, User } from "lucide-react";
 import { motion } from "framer-motion";
 import { HelpRequestResult, MentorCandidate } from "@/types";
+
+// Calendly URL from environment variable with fallback
+const CALENDLY_URL = process.env.NEXT_PUBLIC_CALENDLY_URL || "https://calendly.com/tu-usuario/sesion-de-mentoria-mentorexpress";
+
+// Declare Calendly global type
+declare global {
+  interface Window {
+    Calendly?: {
+      initInlineWidget: (options: {
+        url: string;
+        parentElement: HTMLElement;
+        prefill?: {
+          name?: string;
+          email?: string;
+          customAnswers?: Record<string, string>;
+        };
+      }) => void;
+    };
+  }
+}
 
 import { Button } from "@/components/ui/button";
 import {
@@ -28,7 +48,12 @@ import { Navbar } from "@/components/Navbar";
 import { Skeleton } from "@/components/ui/skeleton";
 
 // View states for the page
-type ViewState = "form" | "loading" | "results";
+type ViewState = "form" | "loading" | "results" | "scheduling";
+
+interface SchedulingData {
+  student: { id: number; fullName: string; email: string };
+  mentor: { id: number; fullName: string; email: string };
+}
 
 export default function OnboardingPage() {
   const router = useRouter();
@@ -37,7 +62,9 @@ export default function OnboardingPage() {
   const [errorMessage, setErrorMessage] = useState("");
   const [result, setResult] = useState<HelpRequestResult | null>(null);
   const [mentors, setMentors] = useState<MentorCandidate[]>([]);
-  const [selecting, setSelecting] = useState<number | null>(null);
+  const [schedulingData, setSchedulingData] = useState<SchedulingData | null>(null);
+  const [calendlyLoaded, setCalendlyLoaded] = useState(false);
+  const calendlyContainerRef = useRef<HTMLDivElement>(null);
 
   const form = useForm<StudentFormValues>({
     resolver: zodResolver(studentSchema),
@@ -88,10 +115,8 @@ export default function OnboardingPage() {
   const handleSelectMentor = (mentor: MentorCandidate) => {
     if (!result) return;
     
-    setSelecting(mentor.id);
-    
-    // Store scheduling data for the calendar page
-    const schedulingData = {
+    // Store scheduling data
+    const data: SchedulingData = {
       student: {
         id: result.student.id,
         fullName: result.student.fullName,
@@ -104,17 +129,63 @@ export default function OnboardingPage() {
       },
     };
     
-    sessionStorage.setItem("schedulingData", JSON.stringify(schedulingData));
-    
-    // Redirect to scheduling page with Calendly
-    router.push("/agendar");
+    setSchedulingData(data);
+    setViewState("scheduling");
   };
 
   const handleBackToForm = () => {
     setViewState("form");
     setResult(null);
     setMentors([]);
+    setSchedulingData(null);
+    setCalendlyLoaded(false);
   };
+
+  const handleBackToResults = () => {
+    setViewState("results");
+    setSchedulingData(null);
+    setCalendlyLoaded(false);
+  };
+
+  // Load Calendly script when entering scheduling state
+  useEffect(() => {
+    if (viewState !== "scheduling") return;
+
+    const existingScript = document.querySelector('script[src="https://assets.calendly.com/assets/external/widget.js"]');
+    
+    if (existingScript) {
+      if (window.Calendly) {
+        setCalendlyLoaded(true);
+      } else {
+        existingScript.addEventListener("load", () => setCalendlyLoaded(true));
+      }
+      return;
+    }
+
+    const script = document.createElement("script");
+    script.src = "https://assets.calendly.com/assets/external/widget.js";
+    script.async = true;
+    script.onload = () => setCalendlyLoaded(true);
+    document.head.appendChild(script);
+  }, [viewState]);
+
+  // Initialize Calendly widget
+  useEffect(() => {
+    if (!calendlyLoaded || !schedulingData || !calendlyContainerRef.current || viewState !== "scheduling") return;
+
+    calendlyContainerRef.current.innerHTML = "";
+
+    if (window.Calendly) {
+      window.Calendly.initInlineWidget({
+        url: `${CALENDLY_URL}?hide_gdpr_banner=1`,
+        parentElement: calendlyContainerRef.current,
+        prefill: {
+          name: schedulingData.student.fullName,
+          email: schedulingData.student.email,
+        },
+      });
+    }
+  }, [calendlyLoaded, schedulingData, viewState]);
 
   // Loading state
   if (viewState === "loading") {
@@ -196,9 +267,7 @@ export default function OnboardingPage() {
                           </div>
                         </div>
                         <div className="px-2 py-1 rounded-md bg-green-500/10 border border-green-500/20">
-                          <span className="text-xs font-bold text-green-600">
-                            {Math.round(mentor.matchScore * 100)}% Match
-                          </span>
+                          <span className="text-xs font-bold text-green-600">Match</span>
                         </div>
                       </div>
                     </CardHeader>
@@ -220,9 +289,8 @@ export default function OnboardingPage() {
                       <Button 
                         className="w-full" 
                         onClick={() => handleSelectMentor(mentor)}
-                        disabled={selecting !== null}
                       >
-                        {selecting === mentor.id ? "Cargando..." : "Agendar Sesión"}
+                        Agendar Sesión
                       </Button>
                     </CardFooter>
                   </Card>
@@ -237,6 +305,132 @@ export default function OnboardingPage() {
               </Button>
             </div>
           </div>
+        </main>
+      </div>
+    );
+  }
+
+  // Scheduling state - show Calendly
+  if (viewState === "scheduling" && schedulingData) {
+    return (
+      <div className="min-h-screen bg-background flex flex-col">
+        <Navbar />
+        <main className="flex-1 container mx-auto px-6 py-8">
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="space-y-6"
+          >
+            {/* Header */}
+            <div className="flex items-center justify-between">
+              <Button
+                variant="ghost"
+                onClick={handleBackToResults}
+                className="gap-2"
+              >
+                <ArrowLeft className="w-4 h-4" />
+                Volver a Mentores
+              </Button>
+            </div>
+
+            {/* Title Section */}
+            <div className="text-center space-y-2">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary border border-primary/20 mb-4">
+                <Calendar className="w-4 h-4" />
+                <span className="text-xs font-medium uppercase tracking-wider">Agendar Sesión</span>
+              </div>
+              <h1 className="text-3xl font-bold tracking-tight">Agenda tu Sesión de Mentoría</h1>
+              <p className="text-muted-foreground max-w-2xl mx-auto">
+                Selecciona el día y horario que mejor te convenga. Tanto tú como tu mentor recibirán un correo de confirmación.
+              </p>
+            </div>
+
+            {/* Match Info Cards */}
+            <div className="grid md:grid-cols-2 gap-4 max-w-2xl mx-auto">
+              {/* Student Card */}
+              <Card className="border-border/50 bg-card/50">
+                <CardHeader className="pb-3">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 rounded-full bg-primary/10">
+                      <User className="w-5 h-5 text-primary" />
+                    </div>
+                    <div>
+                      <CardTitle className="text-base">Estudiante</CardTitle>
+                      <CardDescription className="text-sm">{schedulingData.student.fullName}</CardDescription>
+                    </div>
+                  </div>
+                </CardHeader>
+              </Card>
+
+              {/* Mentor Card */}
+              <Card className="border-border/50 bg-card/50">
+                <CardHeader className="pb-3">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 rounded-full bg-green-500/10">
+                      <GraduationCap className="w-5 h-5 text-green-600" />
+                    </div>
+                    <div>
+                      <CardTitle className="text-base">Mentor</CardTitle>
+                      <CardDescription className="text-sm">{schedulingData.mentor.fullName}</CardDescription>
+                    </div>
+                  </div>
+                </CardHeader>
+              </Card>
+            </div>
+
+            {/* Calendly Embed */}
+            <Card className="border-border/50 bg-card/50 overflow-hidden">
+              <CardContent className="p-0">
+                <div
+                  ref={calendlyContainerRef}
+                  style={{ minWidth: "320px", height: "700px" }}
+                >
+                  {!calendlyLoaded && (
+                    <div className="flex items-center justify-center h-full">
+                      <div className="text-center space-y-4">
+                        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto" />
+                        <p className="text-muted-foreground">Cargando calendario...</p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Instructions */}
+            <div className="max-w-2xl mx-auto">
+              <Card className="border-border/50 bg-accent/5">
+                <CardContent className="p-5">
+                  <h4 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
+                    <CheckCircle2 className="w-4 h-4 text-green-500" />
+                    ¿Qué sucede después de agendar?
+                  </h4>
+                  <ul className="space-y-2 text-sm text-muted-foreground">
+                    <li className="flex items-start gap-2">
+                      <span className="text-primary font-bold mt-0.5">1.</span>
+                      <span>Recibirás un correo de confirmación con los detalles de la sesión</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="text-primary font-bold mt-0.5">2.</span>
+                      <span>Tu mentor también recibirá una notificación</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="text-primary font-bold mt-0.5">3.</span>
+                      <span>Recibirás recordatorios antes de la sesión</span>
+                    </li>
+                  </ul>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Info about email notifications */}
+            <div className="text-center pt-4">
+              <p className="text-xs text-muted-foreground">
+                Una vez que agendes en el calendario, Calendly enviará automáticamente
+                los correos de confirmación a ti y a tu mentor.
+              </p>
+            </div>
+          </motion.div>
         </main>
       </div>
     );
