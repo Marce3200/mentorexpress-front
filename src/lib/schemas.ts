@@ -44,7 +44,6 @@ export const mentorSchema = z.object({
   language: languageEnum,
   modality: modalityEnum,
   bio: z.string().min(20, { message: "La biografía debe tener al menos 20 caracteres" }),
-  availability: z.string().min(10, { message: "Por favor describe tu disponibilidad horaria" }),
 });
 
 export type MentorFormValues = z.infer<typeof mentorSchema>;

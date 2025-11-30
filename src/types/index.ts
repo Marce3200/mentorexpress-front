@@ -32,7 +32,6 @@ export interface MentorCandidate {
   campus: string;
   career: string;
   specialtySubject: string;
-  availability: string;
   bio?: string;
 }
 

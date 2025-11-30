@@ -10,7 +10,7 @@ import { HelpRequestResult, MentorCandidate } from "@/types";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Brain, CheckCircle2, GraduationCap, MapPin, Clock, Award } from "lucide-react";
+import { Brain, CheckCircle2, GraduationCap, MapPin, Briefcase, Award } from "lucide-react";
 
 function getInitialState(): { result: HelpRequestResult | null; mentors: MentorCandidate[] } {
   if (typeof window === "undefined") {
@@ -155,9 +155,9 @@ export default function MatchingPage() {
                               <Award className="w-4 h-4" />
                               <span>{mentor.specialtySubject}</span>
                             </div>
-                            <div className="flex items-start gap-2 text-sm">
-                              <Clock className="w-4 h-4 mt-0.5 text-muted-foreground" />
-                              <span className="text-muted-foreground">{mentor.availability}</span>
+                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                              <Briefcase className="w-4 h-4" />
+                              <span>{mentor.career}</span>
                             </div>
                           </CardContent>
                           <CardFooter>

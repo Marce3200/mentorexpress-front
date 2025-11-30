@@ -38,7 +38,6 @@ export default function MentorOnboardingPage() {
       language: "SPANISH",
       modality: "IN_PERSON",
       bio: "",
-      availability: "",
     },
   });
 
@@ -266,26 +265,6 @@ export default function MentorOnboardingPage() {
                     )}
                   />
 
-                  <FormField
-                    control={form.control}
-                    name="availability"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Disponibilidad Horaria</FormLabel>
-                        <FormControl>
-                          <Textarea
-                            placeholder="Describe tu disponibilidad. Ej: Lunes a viernes de 5pm a 8pm, sábados de 10am a 2pm"
-                            className="min-h-[80px]"
-                            {...field}
-                          />
-                        </FormControl>
-                        <FormDescription>
-                          Especifica los días y horarios en que estás disponible para mentoría.
-                        </FormDescription>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
                 </div>
 
                 <Button type="submit" className="w-full font-bold text-md" disabled={isLoading}>
