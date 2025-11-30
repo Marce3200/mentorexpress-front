@@ -9,6 +9,7 @@ import { useRouter } from "next/navigation";
 import { XCircle, Brain, CheckCircle2, GraduationCap, MapPin, Briefcase, Award, ArrowLeft, Calendar, User } from "lucide-react";
 import { motion } from "framer-motion";
 import { HelpRequestResult, MentorCandidate } from "@/types";
+import { translateCampus, translateCareer, translateSubject } from "@/lib/translations";
 
 // Calendly URL from environment variable with fallback
 const CALENDLY_URL = process.env.NEXT_PUBLIC_CALENDLY_URL || "https://calendly.com/tu-usuario/sesion-de-mentoria-mentorexpress";
@@ -274,15 +275,15 @@ export default function OnboardingPage() {
                     <CardContent className="flex-1 space-y-3">
                       <div className="flex items-center gap-2 text-sm text-muted-foreground">
                         <MapPin className="w-4 h-4" />
-                        <span>{mentor.campus}</span>
+                        <span>{translateCampus(mentor.campus)}</span>
                       </div>
                       <div className="flex items-center gap-2 text-sm text-muted-foreground">
                         <Award className="w-4 h-4" />
-                        <span>{mentor.specialtySubject}</span>
+                        <span>{translateSubject(mentor.specialtySubject)}</span>
                       </div>
                       <div className="flex items-center gap-2 text-sm text-muted-foreground">
                         <Briefcase className="w-4 h-4" />
-                        <span>{mentor.career}</span>
+                        <span>{translateCareer(mentor.career)}</span>
                       </div>
                     </CardContent>
                     <CardFooter>
