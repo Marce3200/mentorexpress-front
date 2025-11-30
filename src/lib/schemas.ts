@@ -29,8 +29,11 @@ export const studentSchema = z.object({
   email: z.string().email({ message: "Por favor ingresa un correo válido" }),
   campus: campusEnum,
   career: careerEnum,
+  subject: subjectEnum,
   currentYear: z.number().min(1, { message: "El año debe ser válido" }).max(6, { message: "El año debe ser válido" }),
-  needs: z.string().min(10, { message: "Por favor proporciona más detalles sobre lo que necesitas para un mejor emparejamiento" }),
+  language: languageEnum,
+  modality: modalityEnum,
+  request: z.string().min(10, { message: "Por favor proporciona más detalles sobre lo que necesitas para un mejor emparejamiento" }),
 });
 
 export type StudentFormValues = z.infer<typeof studentSchema>;

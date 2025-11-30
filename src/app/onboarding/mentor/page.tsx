@@ -6,6 +6,7 @@ import { mentorSchema, MentorFormValues } from "@/lib/schemas";
 import { registerMentor } from "@/services/api";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { CheckCircle2, XCircle } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -26,6 +27,8 @@ import { Navbar } from "@/components/Navbar";
 export default function MentorOnboardingPage() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
+  const [submitStatus, setSubmitStatus] = useState<"idle" | "success" | "error">("idle");
+  const [errorMessage, setErrorMessage] = useState("");
 
   const form = useForm<MentorFormValues>({
     resolver: zodResolver(mentorSchema),
@@ -43,18 +46,26 @@ export default function MentorOnboardingPage() {
 
   async function onSubmit(data: MentorFormValues) {
     setIsLoading(true);
+    setSubmitStatus("idle");
+    setErrorMessage("");
+    
     try {
       // 1. Register Mentor
       await registerMentor(data);
       // 2. Store mentor profile in local storage
       localStorage.setItem("mentorProfile", JSON.stringify(data));
-      // 3. Redirect to success page or home
-      router.push("/");
+      // 3. Show success message
+      setSubmitStatus("success");
+      // 4. Redirect after a short delay
+      setTimeout(() => {
+        router.push("/");
+      }, 2000);
     } catch (error) {
       console.error(error);
-      // Even if it fails (backend down), proceed for the demo
+      setSubmitStatus("error");
+      setErrorMessage(error instanceof Error ? error.message : "Error al registrar mentor");
+      // Store locally anyway for demo
       localStorage.setItem("mentorProfile", JSON.stringify(data));
-      router.push("/");
     } finally {
       setIsLoading(false);
     }
@@ -267,8 +278,23 @@ export default function MentorOnboardingPage() {
 
                 </div>
 
-                <Button type="submit" className="w-full font-bold text-md" disabled={isLoading}>
-                  {isLoading ? "Registrando..." : "Registrarse como Mentor"}
+                {/* Status Messages */}
+                {submitStatus === "success" && (
+                  <div className="flex items-center gap-2 p-4 rounded-lg bg-green-500/10 border border-green-500/20 text-green-600">
+                    <CheckCircle2 className="w-5 h-5" />
+                    <span className="text-sm font-medium">¡Registro exitoso! Redirigiendo...</span>
+                  </div>
+                )}
+                
+                {submitStatus === "error" && (
+                  <div className="flex items-center gap-2 p-4 rounded-lg bg-red-500/10 border border-red-500/20 text-red-600">
+                    <XCircle className="w-5 h-5" />
+                    <span className="text-sm font-medium">{errorMessage || "Hubo un error al registrar. Por favor intenta de nuevo."}</span>
+                  </div>
+                )}
+
+                <Button type="submit" className="w-full font-bold text-md" disabled={isLoading || submitStatus === "success"}>
+                  {isLoading ? "Registrando..." : submitStatus === "success" ? "¡Registrado!" : "Registrarse como Mentor"}
                 </Button>
               </form>
             </Form>

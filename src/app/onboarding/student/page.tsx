@@ -6,6 +6,9 @@ import { studentSchema, StudentFormValues } from "@/lib/schemas";
 import { requestHelp } from "@/services/api";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { XCircle, Brain, CheckCircle2, GraduationCap, MapPin, Briefcase, Award, ArrowLeft } from "lucide-react";
+import { motion } from "framer-motion";
+import { HelpRequestResult, MentorCandidate } from "@/types";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -20,12 +23,21 @@ import {
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
+import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
 import { Navbar } from "@/components/Navbar";
+import { Skeleton } from "@/components/ui/skeleton";
+
+// View states for the page
+type ViewState = "form" | "loading" | "results";
 
 export default function OnboardingPage() {
   const router = useRouter();
+  const [viewState, setViewState] = useState<ViewState>("form");
   const [isLoading, setIsLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
+  const [result, setResult] = useState<HelpRequestResult | null>(null);
+  const [mentors, setMentors] = useState<MentorCandidate[]>([]);
+  const [selecting, setSelecting] = useState<number | null>(null);
 
   const form = useForm<StudentFormValues>({
     resolver: zodResolver(studentSchema),
@@ -34,36 +46,203 @@ export default function OnboardingPage() {
       email: "",
       campus: "ANTONIO_VARAS",
       career: "CIVIL_ENGINEERING",
+      subject: "CALCULUS_I",
       currentYear: 1,
-      needs: "",
+      language: "SPANISH",
+      modality: "IN_PERSON",
+      request: "",
     },
   });
 
   async function onSubmit(data: StudentFormValues) {
     setIsLoading(true);
+    setErrorMessage("");
+    setViewState("loading");
+    
     try {
         // 1. Request help with triage
-        const result = await requestHelp(data);
+        const helpResult = await requestHelp(data);
         
-        // 2. Store result in session storage
-        sessionStorage.setItem("helpRequestResult", JSON.stringify(result));
+        // 2. Store result in session storage (for calendar page)
+        sessionStorage.setItem("helpRequestResult", JSON.stringify(helpResult));
         
         // 3. Route based on triage result
-        if (result.resultado.tipo === "emocional") {
+        if (helpResult.resultado.tipo === "emocional") {
             // Emotional support needed - redirect to welfare page
             router.push("/resultado/emocional");
         } else {
-            // Academic help - redirect to mentor selection
-            router.push("/matching");
+            // Academic help - show mentor results in same page
+            setResult(helpResult);
+            setMentors(helpResult.resultado.mentores || []);
+            setViewState("results");
         }
     } catch (error) {
         console.error("Error requesting help:", error);
-        alert("Hubo un error al procesar tu solicitud. Por favor intenta de nuevo.");
+        setErrorMessage("Hubo un error al procesar tu solicitud. Verifica que el servidor esté activo e intenta de nuevo.");
+        setViewState("form");
     } finally {
         setIsLoading(false);
     }
   }
 
+  const handleSelectMentor = (mentor: MentorCandidate) => {
+    if (!result) return;
+    
+    setSelecting(mentor.id);
+    
+    // Store scheduling data for the calendar page
+    const schedulingData = {
+      student: {
+        id: result.student.id,
+        fullName: result.student.fullName,
+        email: result.student.email,
+      },
+      mentor: {
+        id: mentor.id,
+        fullName: mentor.fullName,
+        email: mentor.email,
+      },
+    };
+    
+    sessionStorage.setItem("schedulingData", JSON.stringify(schedulingData));
+    
+    // Redirect to scheduling page with Calendly
+    router.push("/agendar");
+  };
+
+  const handleBackToForm = () => {
+    setViewState("form");
+    setResult(null);
+    setMentors([]);
+  };
+
+  // Loading state
+  if (viewState === "loading") {
+    return (
+      <div className="min-h-screen bg-background flex flex-col">
+        <Navbar />
+        <main className="flex-1 container mx-auto px-6 py-12">
+          <div className="flex flex-col items-center justify-center h-[60vh] space-y-8">
+            <div className="relative">
+              <div className="absolute inset-0 bg-primary/20 blur-xl rounded-full animate-pulse" />
+              <Brain className="w-24 h-24 text-primary animate-bounce relative z-10" />
+            </div>
+            <div className="text-center space-y-2">
+              <h2 className="text-2xl font-bold">Analizando tu Perfil...</h2>
+              <p className="text-muted-foreground">Buscando los mejores mentores para ti...</p>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full max-w-4xl mt-8">
+              {[1, 2, 3].map((i) => (
+                <Card key={i} className="p-6 space-y-4">
+                  <div className="flex items-center space-x-4">
+                    <Skeleton className="h-12 w-12 rounded-full" />
+                    <div className="space-y-2">
+                      <Skeleton className="h-4 w-[150px]" />
+                      <Skeleton className="h-4 w-[100px]" />
+                    </div>
+                  </div>
+                  <Skeleton className="h-20 w-full" />
+                </Card>
+              ))}
+            </div>
+          </div>
+        </main>
+      </div>
+    );
+  }
+
+  // Results state - show mentors
+  if (viewState === "results" && result) {
+    return (
+      <div className="min-h-screen bg-background flex flex-col">
+        <Navbar />
+        <main className="flex-1 container mx-auto px-6 py-12">
+          <div className="space-y-8">
+            <motion.div 
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="text-center space-y-2"
+            >
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-green-500/10 text-green-500 border border-green-500/20 mb-4">
+                <CheckCircle2 className="w-4 h-4" />
+                <span className="text-xs font-medium uppercase tracking-wider">Análisis Completado</span>
+              </div>
+              <h1 className="text-4xl font-bold tracking-tight">Tus Mentores Recomendados</h1>
+              <p className="text-muted-foreground max-w-2xl mx-auto">
+                {result.resultado.tipo === "academica" && result.resultado.mensaje 
+                  ? result.resultado.mensaje 
+                  : "Encontramos estos mentores basados en tu perfil y necesidades académicas."}
+              </p>
+            </motion.div>
+
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {mentors.map((mentor, index) => (
+                <motion.div
+                  key={mentor.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.1 }}
+                >
+                  <Card className="flex flex-col h-full hover:shadow-lg transition-shadow">
+                    <CardHeader>
+                      <div className="flex items-start justify-between mb-2">
+                        <div className="flex items-center gap-2">
+                          <div className="p-2 rounded-full bg-primary/10">
+                            <GraduationCap className="w-5 h-5 text-primary" />
+                          </div>
+                          <div>
+                            <CardTitle className="text-lg">{mentor.fullName}</CardTitle>
+                            <CardDescription className="text-sm">{mentor.email}</CardDescription>
+                          </div>
+                        </div>
+                        <div className="px-2 py-1 rounded-md bg-green-500/10 border border-green-500/20">
+                          <span className="text-xs font-bold text-green-600">
+                            {Math.round(mentor.matchScore * 100)}% Match
+                          </span>
+                        </div>
+                      </div>
+                    </CardHeader>
+                    <CardContent className="flex-1 space-y-3">
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <MapPin className="w-4 h-4" />
+                        <span>{mentor.campus}</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <Award className="w-4 h-4" />
+                        <span>{mentor.specialtySubject}</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <Briefcase className="w-4 h-4" />
+                        <span>{mentor.career}</span>
+                      </div>
+                    </CardContent>
+                    <CardFooter>
+                      <Button 
+                        className="w-full" 
+                        onClick={() => handleSelectMentor(mentor)}
+                        disabled={selecting !== null}
+                      >
+                        {selecting === mentor.id ? "Cargando..." : "Agendar Sesión"}
+                      </Button>
+                    </CardFooter>
+                  </Card>
+                </motion.div>
+              ))}
+            </div>
+
+            <div className="text-center pt-4">
+              <Button variant="outline" onClick={handleBackToForm} className="gap-2">
+                <ArrowLeft className="w-4 h-4" />
+                Volver al Formulario
+              </Button>
+            </div>
+          </div>
+        </main>
+      </div>
+    );
+  }
+
+  // Default: Form state
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <Navbar />
@@ -145,7 +324,8 @@ export default function OnboardingPage() {
                             />
                         </div>
 
-                        <FormField
+                        <div className="grid grid-cols-2 gap-4">
+                            <FormField
                                 control={form.control}
                                 name="career"
                                 render={({ field }) => (
@@ -169,9 +349,82 @@ export default function OnboardingPage() {
                                 )}
                             />
 
+                            <FormField
+                                control={form.control}
+                                name="subject"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Asignatura</FormLabel>
+                                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                            <FormControl>
+                                                <SelectTrigger>
+                                                    <SelectValue placeholder="Selecciona asignatura" />
+                                                </SelectTrigger>
+                                            </FormControl>
+                                            <SelectContent>
+                                                <SelectItem value="CALCULUS_I">Cálculo I</SelectItem>
+                                                <SelectItem value="LINEAR_ALGEBRA">Álgebra Lineal</SelectItem>
+                                                <SelectItem value="PHYSICS">Física</SelectItem>
+                                                <SelectItem value="PROGRAMMING">Programación</SelectItem>
+                                                <SelectItem value="ELECTRONICS">Electrónica</SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-4">
+                            <FormField
+                                control={form.control}
+                                name="language"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Idioma</FormLabel>
+                                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                            <FormControl>
+                                                <SelectTrigger>
+                                                    <SelectValue placeholder="Selecciona idioma" />
+                                                </SelectTrigger>
+                                            </FormControl>
+                                            <SelectContent>
+                                                <SelectItem value="SPANISH">Español</SelectItem>
+                                                <SelectItem value="ENGLISH">Inglés</SelectItem>
+                                                <SelectItem value="SPANISH_ENGLISH">Español e Inglés</SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+
+                            <FormField
+                                control={form.control}
+                                name="modality"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Modalidad</FormLabel>
+                                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                            <FormControl>
+                                                <SelectTrigger>
+                                                    <SelectValue placeholder="Selecciona modalidad" />
+                                                </SelectTrigger>
+                                            </FormControl>
+                                            <SelectContent>
+                                                <SelectItem value="IN_PERSON">Presencial</SelectItem>
+                                                <SelectItem value="ONLINE">Online</SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                        </div>
+
                         <FormField
                             control={form.control}
-                            name="needs"
+                            name="request"
                             render={({ field }) => (
                                 <FormItem>
                                     <FormLabel>¿En qué necesitas ayuda?</FormLabel>
@@ -190,8 +443,16 @@ export default function OnboardingPage() {
                             )}
                         />
 
+                        {/* Error Message */}
+                        {errorMessage && (
+                          <div className="flex items-center gap-2 p-4 rounded-lg bg-red-500/10 border border-red-500/20 text-red-600">
+                            <XCircle className="w-5 h-5 flex-shrink-0" />
+                            <span className="text-sm font-medium">{errorMessage}</span>
+                          </div>
+                        )}
+
                         <Button type="submit" className="w-full font-bold text-md" disabled={isLoading}>
-                            {isLoading ? "Registrando..." : "Encontrar mi Mentor"}
+                            {isLoading ? "Buscando mentores..." : "Encontrar mi Mentor"}
                         </Button>
                     </form>
                 </Form>
