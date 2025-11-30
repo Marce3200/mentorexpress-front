@@ -6,6 +6,7 @@ import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
 import { Brain, GraduationCap, Sparkles } from "lucide-react";
 import { motion } from "framer-motion";
+import { Logo } from "@/components/Logo";
 
 export default function LandingPage() {
   return (
@@ -18,17 +19,18 @@ export default function LandingPage() {
       <main className="container mx-auto px-6 pt-20 pb-12 relative z-10">
         
         {/* Hero Section */}
-        <div className="flex flex-col items-center text-center gap-8 max-w-4xl mx-auto mt-12">
+        <div className="flex flex-col items-center text-center gap-6 max-w-4xl mx-auto mt-8">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
+            transition={{ delay: 0.2, duration: 0.5 }}
+            className="space-y-4"
           >
-             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-secondary/50 border border-secondary mb-6">
+             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-secondary/50 border border-secondary">
                 <Sparkles className="w-4 h-4 text-yellow-400" />
-                <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Emparejamiento Potenciado por IA v2.0</span>
+                <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Emparejamiento Potenciado por IA</span>
              </div>
-             <h1 className="text-5xl md:text-7xl font-bold tracking-tight leading-tight">
+             <h1 className="text-4xl md:text-5xl font-bold tracking-tight leading-tight">
                 Tu Mentor Académico Perfecto <br />
                 <span className="bg-gradient-to-r from-violet-500 to-fuchsia-500 bg-clip-text text-transparent">
                     Potenciado por IA
@@ -36,10 +38,19 @@ export default function LandingPage() {
              </h1>
           </motion.div>
 
+          <motion.div
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.5 }}
+            className="w-full max-w-sm -my-4"
+          >
+            <Logo width={400} height={200} className="mx-auto w-full h-auto" />
+          </motion.div>
+
           <motion.p 
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ delay: 0.2, duration: 0.5 }}
+            transition={{ delay: 0.4, duration: 0.5 }}
             className="text-xl text-muted-foreground max-w-2xl"
           >
             Conecta con mentores que entienden tu estilo de aprendizaje. Nuestro motor de IA analiza tu perfil para encontrar el tutor perfecto.
@@ -48,7 +59,7 @@ export default function LandingPage() {
           <motion.div 
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.4, duration: 0.5 }}
+            transition={{ delay: 0.6, duration: 0.5 }}
             className="flex gap-4 mt-4"
           >
             <Button 

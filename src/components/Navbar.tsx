@@ -1,8 +1,8 @@
 "use client";
 
-import { Bot } from "lucide-react";
 import Link from "next/link";
 import { ModeToggle } from "@/components/mode-toggle";
+import { Logo } from "@/components/Logo";
 
 export function Navbar() {
   return (
@@ -10,7 +10,7 @@ export function Navbar() {
       <div className="container flex h-14 items-center max-w-screen-2xl">
         <div className="mr-4 hidden md:flex">
           <Link href="/" className="mr-6 flex items-center space-x-2">
-            <Bot className="h-6 w-6" />
+            <Logo width={28} height={28} />
             <span className="hidden font-bold sm:inline-block">
               MentorExpress
             </span>
