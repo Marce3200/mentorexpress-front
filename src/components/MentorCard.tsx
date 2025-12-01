@@ -1,18 +1,27 @@
 "use client";
 
+import { useState } from "react";
 import { Card, CardHeader, CardContent, CardFooter } from "@/components/ui/card";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { MapPin, Sparkles } from "lucide-react";
+import { MapPin, Sparkles, Quote, ChevronDown, ChevronUp } from "lucide-react";
 import { Mentor } from "@/types";
+
+const BIO_TRUNCATE_LENGTH = 120;
 
 interface MentorCardProps {
   mentor: Mentor;
 }
 
 export function MentorCard({ mentor }: MentorCardProps) {
+  const [isBioExpanded, setIsBioExpanded] = useState(false);
   const isHighMatch = mentor.matchScore > 0.9;
+  
+  const shouldTruncateBio = mentor.bio.length > BIO_TRUNCATE_LENGTH;
+  const displayBio = isBioExpanded || !shouldTruncateBio
+    ? mentor.bio
+    : mentor.bio.slice(0, BIO_TRUNCATE_LENGTH) + "...";
 
   return (
     <Card className="h-full flex flex-col overflow-hidden border-border/50 hover:border-primary/50 transition-colors group">
@@ -37,9 +46,36 @@ export function MentorCard({ mentor }: MentorCardProps) {
         <div className="flex items-center gap-2 text-xs text-muted-foreground mb-3">
           <MapPin className="w-3 h-3" /> {mentor.campus}
         </div>
-        <p className="text-sm text-foreground/90 line-clamp-3 mb-4">
-          &quot;{mentor.bio}&quot;
-        </p>
+        
+        {/* Bio with expand/collapse */}
+        <div className="mb-4">
+          <div className="flex gap-2">
+            <Quote className="w-4 h-4 text-primary/60 flex-shrink-0 mt-0.5" />
+            <div className="flex-1">
+              <p className="text-sm text-foreground/80 italic leading-relaxed">
+                {displayBio}
+              </p>
+              {shouldTruncateBio && (
+                <button
+                  type="button"
+                  onClick={() => setIsBioExpanded(!isBioExpanded)}
+                  className="inline-flex items-center gap-1 text-xs text-primary hover:text-primary/80 mt-1 font-medium transition-colors"
+                >
+                  {isBioExpanded ? (
+                    <>
+                      Ver menos <ChevronUp className="w-3 h-3" />
+                    </>
+                  ) : (
+                    <>
+                      Ver más <ChevronDown className="w-3 h-3" />
+                    </>
+                  )}
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+        
         <div className="flex flex-wrap gap-2">
           {mentor.tags.map(tag => (
             <Badge key={tag} variant="outline" className="bg-primary/5 border-primary/10 text-xs font-normal">

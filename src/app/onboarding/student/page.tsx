@@ -6,7 +6,7 @@ import { studentSchema, StudentFormValues } from "@/lib/schemas";
 import { requestHelp } from "@/services/api";
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { XCircle, Brain, CheckCircle2, GraduationCap, MapPin, Briefcase, Award, ArrowLeft, Calendar, User } from "lucide-react";
+import { XCircle, Brain, CheckCircle2, GraduationCap, MapPin, Briefcase, Award, ArrowLeft, Calendar, User, Quote, ChevronDown, ChevronUp } from "lucide-react";
 import { motion } from "framer-motion";
 import { HelpRequestResult, MentorCandidate } from "@/types";
 import { translateCampus, translateCareer, translateSubject } from "@/lib/translations";
@@ -50,6 +50,47 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 // View states for the page
 type ViewState = "form" | "loading" | "results" | "scheduling";
+
+// Bio display component with expand/collapse functionality
+function MentorBio({ bio }: { bio: string }) {
+  const [isExpanded, setIsExpanded] = useState(false);
+  const BIO_TRUNCATE_LENGTH = 120;
+  const shouldTruncate = bio.length > BIO_TRUNCATE_LENGTH;
+  
+  const displayBio = isExpanded || !shouldTruncate 
+    ? bio 
+    : bio.slice(0, BIO_TRUNCATE_LENGTH) + "...";
+
+  return (
+    <div className="relative">
+      <div className="flex gap-2">
+        <Quote className="w-4 h-4 text-primary/60 flex-shrink-0 mt-0.5" />
+        <div className="flex-1">
+          <p className="text-sm text-foreground/80 italic leading-relaxed">
+            {displayBio}
+          </p>
+          {shouldTruncate && (
+            <button
+              type="button"
+              onClick={() => setIsExpanded(!isExpanded)}
+              className="inline-flex items-center gap-1 text-xs text-primary hover:text-primary/80 mt-1 font-medium transition-colors"
+            >
+              {isExpanded ? (
+                <>
+                  Ver menos <ChevronUp className="w-3 h-3" />
+                </>
+              ) : (
+                <>
+                  Ver más <ChevronDown className="w-3 h-3" />
+                </>
+              )}
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
 
 interface SchedulingData {
   student: { id: number; fullName: string; email: string };
@@ -273,17 +314,25 @@ export default function OnboardingPage() {
                       </div>
                     </CardHeader>
                     <CardContent className="flex-1 space-y-3">
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <MapPin className="w-4 h-4" />
-                        <span>{translateCampus(mentor.campus)}</span>
-                      </div>
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <Award className="w-4 h-4" />
-                        <span>{translateSubject(mentor.specialtySubject)}</span>
-                      </div>
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <Briefcase className="w-4 h-4" />
-                        <span>{translateCareer(mentor.career)}</span>
+                      {/* Mentor Bio - Key for matching */}
+                      {mentor.bio && (
+                        <MentorBio bio={mentor.bio} />
+                      )}
+                      
+                      {/* Mentor Details */}
+                      <div className="space-y-2 pt-2 border-t border-border/50">
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                          <MapPin className="w-4 h-4 flex-shrink-0" />
+                          <span>{translateCampus(mentor.campus)}</span>
+                        </div>
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                          <Award className="w-4 h-4 flex-shrink-0" />
+                          <span>{translateSubject(mentor.specialtySubject)}</span>
+                        </div>
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                          <Briefcase className="w-4 h-4 flex-shrink-0" />
+                          <span>{translateCareer(mentor.career)}</span>
+                        </div>
                       </div>
                     </CardContent>
                     <CardFooter>
