@@ -20,15 +20,14 @@ Copia el archivo `.env.example` a `.env.local`:
 cp .env.example .env.local
 ```
 
-Contenido de `.env.local`:
+Contenido de `.env.local` (desarrollo local):
 
 ```bash
 # Puerto en el que correrá la aplicación Next.js (por defecto: 3007)
 PORT=3007
 
-# URL del backend (NestJS)
-# En desarrollo local: http://localhost:3000
-# En producción: tu URL de backend
+# URL del backend (NestJS) para desarrollo local
+# Ejemplo: http://localhost:3000
 BACKEND_URL=http://localhost:3000
 ```
 
@@ -46,6 +45,17 @@ La aplicación estará disponible en [http://localhost:3007](http://localhost:30
 npm run build
 npm start
 ```
+
+## Despliegue en Vercel
+
+Para producción se recomienda desplegar esta aplicación en [Vercel](https://vercel.com/):
+
+- Configura el repositorio `fronted-nextjs` como proyecto en Vercel.
+- Usa `npm run build` como comando de build y selecciona `Next.js` como framework.
+- Define la variable de entorno `NEXT_PUBLIC_BACKEND_URL` apuntando a la URL pública del backend NestJS desplegado en AWS (por ejemplo, `https://api.tu-dominio.com`).
+- Opcionalmente configura `NEXT_PUBLIC_CALENDLY_URL` con el enlace de Calendly usado en la aplicación.
+
+Vercel inyectará `NEXT_PUBLIC_BACKEND_URL` en el cliente, que es leída por `src/config/env.ts` para construir las llamadas BFF hacia el backend.
 
 ## Arquitectura y Configuración
 
