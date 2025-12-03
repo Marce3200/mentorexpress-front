@@ -356,7 +356,6 @@ export interface SelectMentorResult {
 
 ### **5. Navbar**
 - **Cambios:** Eliminado "Iniciar Sesión" y links innecesarios
-- **Links activos:** Solo "Acerca de"
 - **Componentes:** Logo, ModeToggle (tema claro/oscuro)
 
 ---
